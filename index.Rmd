@@ -5,67 +5,294 @@ output: html_document
 
 ### Introduction
 
-An introduction of the problem domain and a description of the variable(s) you are choosing to analyze (and why!)
+I choose the dataset [Smaller dataset about prison/jail population per 100,000 
+people (rate) per county/state starting at 1990 in Washington]
+(https://github.com/melaniewalsh/Neat-Datasets/raw/main/us-prison-jail-rates-1990-WA.csv)
+This dataset provides detailed insights into prison and jail rates in Washington 
+State from 1990 to 2018. This dataset is instrumental for analyzing trends over 
+nearly three decades, focusing on the rates of incarceration per 100,000 people.
+Rates is formatted such that each unit represents 1 individual per 100,000 in 
+the population, making the data both accessible and interpretable in terms of 
+understanding the scale of incarceration relative to the total population size.
+In this report, I analyzed key variables reflecting incarceration rates across 
+Washington State, with a specific focus on racial disparities. The variables 
+examined include the Total Jail Population Rate, average black jail population 
+rate, and other specific rates for Black and White populations, and some other 
+relevant variables which help trace trends and evaluate the effectiveness of 
+interventions. 
+
 
 ### Summary Information
 
-Write a summary paragraph of findings that includes the 5 values calculated from your summary information R script
+The summary of jail population rates across Washington State underscores 
+significant insights into racial disparities and the dynamics of incarceration. 
+In the most recent year of data, 39 counties reported, offering a comprehensive 
+overview for analysis. The maximum total jail population rate is about 992.82, 
+and the highest black jail population rate is about 31000 in Pend Oreille County. 
+The data reveals stark disparities, the maximum jail population rate for Black 
+individuals is significantly higher than for White individuals, with the largest 
+difference recorded in about 4052.54. Furthermore, the recent average jail 
+population rates show that Black individuals are incarcerated at a higher rate 
+compared to their White counterparts.The average white jail population rate is 
+about 326.48, and the average black jail population rate is about 1052.11. 
+The change in the average Black jail population rate over the years, which is 
+about -707.576.These findings underscore the need for continued efforts to
+address racial inequalities within the criminal justice system of Washington 
+State, providing a crucial basis for policymakers and community activists 
+focused on reform and equity.
 
-These will likely be calculated using your DPLYR skills, answering questions such as: 
+``````{r}
+library(dplyr)
+prison_wa <- read.csv("https://github.com/melaniewalsh/Neat-Datasets/raw/main/us-prison-jail-rates-1990-WA.csv")
 
-- What is the average value of my variable across all the counties (in the current year)?
-- Where is my variable the highest / lowest?
-- How much has my variable change over the last N years?
+summary_info <- list() 
+## Total number of counties in Washington in this dataset
+summary_info$num_county <- prison_wa %>%
+  filter(year == max(year)) %>%
+  summarize(num = n()) %>%
+  pull(num)
+## The maximum total jail population rate in this dataset
+summary_info$max_jail_rate <- prison_wa %>%
+  filter(total_jail_pop_rate == max(total_jail_pop_rate, na.rm = TRUE)) %>%
+  pull(total_jail_pop_rate)
+## The maximum black jail population rate in this dataset
+summary_info$max_jail_rate_black <- prison_wa %>%
+  filter(black_jail_pop_rate == max(black_jail_pop_rate, na.rm = TRUE)) %>%
+  pull(black_jail_pop_rate)
+## The county of maximum black jail population rate in this dataset
+summary_info$max_jail_rate_black_county <- prison_wa %>%
+  filter(black_jail_pop_rate == max(black_jail_pop_rate, na.rm = TRUE)) %>%
+  pull(county_name)
+## The difference between maximum black jail population rate and maximum white 
+## jail population rate
+summary_info$diff_max_race_jail_rate <- prison_wa %>%
+  filter(year == max(year)) %>%
+  summarize(max_diff = max(black_jail_pop_rate, na.rm = TRUE) -
+              max(white_jail_pop_rate, na.rm = TRUE)) %>%
+  pull(max_diff)
+## The average white jail population rate in the recent year in this dataset
+summary_info$recent_avg_jail_rate_white <- prison_wa %>%
+  filter(year == max(year)) %>%
+  summarize(avg_rate = mean(white_jail_pop_rate, na.rm = TRUE)) %>%
+  pull(avg_rate)
+## The average black jail population rate in the recent year in this dataset
+summary_info$recent_avg_jail_rate_black <- prison_wa %>%
+  filter(year == max(year)) %>%
+  summarize(avg_rate = mean(black_jail_pop_rate, na.rm = TRUE)) %>%
+  pull(avg_rate)
+## The change of average black jail population rate over years
+summary_info$change_avg_black_jail_rate <- prison_wa %>%
+  group_by(year) %>%
+  summarize(avg_rate = mean(black_jail_pop_rate, na.rm = TRUE)) %>%
+  filter(year == max(year) | year == min(year)) %>%
+  summarize(change = diff(avg_rate)) %>%
+  pull(change)
 
-Feel free to calculate and report values that you find relevant. Again, remember that the purpose is to think about how these measure of incarceration vary by race.
-
+summary_info
+```
 ### The Dataset
 
 Who collected the data?  
-How was the data collected or generated?  
+
+- The data was collected by the Vera Institute of Justice, a nonprofit 
+organization that focuses on criminal justice reform.
+It was compiled by Census of Jails, Census of State and Federal Adult 
+CorrectionalFacilities, FBI Uniform Crime Reporting Program, National 
+Corrections Reporting Program, Deaths in Custody Reporting Program, Annual 
+Survey of Jails, Centers on Disease Control, U.S. Department of Agriculture, and 
+U.S. Census Bureau. Many organizations combined and cooperated together.
+
+
+How was the data collected or generated?
+
+- The data was generated using several sources, and it was created through the 
+collaborative efforts of multiple organizations, which enriched it by 
+integrating additional data and information to fill any existing gaps.
+
 Why was the data collected?  
+
+- The data was collected to support the Vera Institute of Justice’s project, 
+"In Our Backyards." This project aims to highlight and address the local impacts 
+of jail and prison use and to understand how incarceration rates vary 
+significantly across different counties and jurisdictions. It seeks to provide 
+a more detailed analysis than state-level data, which can obscure local 
+variations and issues.
+
 How many observations (rows) are in your data?  
+
+- There is 1131 rows in this data.
+
 How many features (columns) are in the data?  
+
+- There are 23 columns in this data.
+
 What, if any, ethical questions or questions of power do you need to consider when working with this data?  
+
+- When analyzing data on incarceration rates, particularly those that 
+distinguish rates by race and demographics, several ethical considerations and 
+power dynamics come into play. Privacy and anonymity are crucial, requiring 
+rigorous measures to prevent the identification of individuals from the data. 
+There's also a significant risk of reinforcing negative stereotypes and biases 
+if the data is not handled and interpreted with sensitivity towards the groups 
+it represents. The accuracy of the data must be critically assessed to ensure it 
+does not reflect or amplify existing systemic biases in law enforcement or data 
+collection practices.  Researchers and policymakers must navigate these ethical 
+waters with transparency about the data's limitations
+
+
 What are possible limitations or problems with this data?   (at least 200 words)
+
+- Changes in data collection methods over time or reforms in the justice system 
+can affect the consistency of data year over year. For instance, the 
+introduction of new reporting requirements or changes in the legal definitions 
+of crimes can result in apparent trends that are actually artifacts of these 
+changes rather than true changes in behavior or enforcement. The data may not 
+perfectly represent the entire population of interest. For example, smaller 
+jurisdictions or those with less robust data collection infrastructure might 
+be underrepresented. This could skew understandings of regional differences in 
+incarceration practices. There is a significant amount of missing data and 
+timeframe limitations in the dataset (jail data from 1983 to 2016), which can 
+pose a challenge to conducting a thorough and accurate analysis. Since the 
+prison data only covers up to 2016, and the dataset contains information up to 
+2018, this could lead to a lack of data support when analyzing trends in recent 
+years. This discontinuity may make it difficult for researchers to assess trends 
+in recent years, such as determining whether there is a downward or upward trend 
+in prison population numbers. Large amounts of missing data may bias the results 
+of statistical analyses. For example, if data for a particular county are 
+missing frequently over a period of years, estimates of the average level or 
+growth trend of the prison population in that county may not be accurate. 
+Missing data may affect the representativeness of the results of the analysis, 
+which may also lead to misinterpretation of particular groups or regions.
 
 
 ### Trends Over Time Chart
 
-Include a chart. Make sure to describe why you included the chart, and what patterns emerged
+The chart visualizes the trends in Black jail population rates in the top 5 
+counties in Washington state from 1990 to 2018. These top 5 counties are those 
+have the highest average black jail population rate. The chart reveals that 
+Black jail population rates have experienced significant volatility over the 
+decades in all five counties. This fluctuation could be indicative of various 
+external factors influencing incarceration rates, such as changes in law 
+enforcement practices, policy reforms, economic conditions, or social movements. 
+Most counties show pronounced peaks at certain points, particularly in the late 
+1990s and early 2000s, followed by sharp declines. For instance, Columbia County
+and Yakima County show sharp peaks around the early 2000s. Post-2010, the trends 
+in these counties begin to diverge more noticeably. Some counties like Asotin 
+show a resurgence in rates, while others like Lincoln continue to decline. 
+Overall, all 5 counties showed a decline in black jail population rate even 
+with strong fluctuations.
 
-The first chart that you will create and include will show the trend over time of your variable/topic. Think carefully about what you want to communicate to your user (you may have to find relevant trends in the dataset first!). Here are some requirements to help guide your design:
 
-- Show more than one, but fewer than ~10 trends
-  - This may mean showing the same measure for different locations or different racial groups. Think carefully about a meaningful comparison of locations (e.g., the top 10 counties in a state, top 10 states, etc.)
-- You must have clear x and y axis labels
-- The chart needs a clear title 
-- You need a legend for your different line colors and a clear legend title
+``````{r}
+library(ggplot2)
 
-When we say "clear" or "human readable" titles and labels, that means that you should not just display the variable name.
+top_5_county <- prison_wa %>%
+  filter(!is.na(black_jail_pop_rate)) %>%
+  group_by(county_name) %>%
+  summarize(mean_rate = mean(black_jail_pop_rate))%>%
+  top_n(5, wt = mean_rate) %>%
+  pull(county_name)
 
-Here's an example of how to run an R script inside an RMarkdown file:
+data1 <- prison_wa %>%
+  group_by(year) %>%
+  filter(county_name %in% top_5_county) %>%
+  filter(!is.na(black_jail_pop_rate))
 
-``````{r, echo = FALSE, code = readLines("chart1_example.R")}
+ggplot(data = data1, aes(x=year, y=black_jail_pop_rate, group=county_name, 
+                         color=county_name)) + 
+  geom_line() +
+  labs(title = "Black Jail Population Rate Trends In Top Mean 5 Counties",
+       x = "Year", y = "Black Jail Population Rate (Unit: 0.01)", 
+       color = "County Names") +
+  scale_x_continuous(breaks = seq(1990, 2018, by=4))
 ```
+
+
 
 ### Variable Comparison Chart
 
-Include a chart. Make sure to describe why you included the chart, and what patterns emerged
+The scatterplot visualizes the relationship between the total jail population 
+rate and the Black jail population rate across various counties in Washington 
+State, using data from 1990 to the 2018. This chart was chosen to highlight 
+how general incarceration trends align or differ specifically with the 
+incarceration rates of the Black population, potentially pointing to disparities 
+or patterns unique to this demographic group. Pink points represent individual 
+data points, where each point indicates a county's combined rates of total and 
+Black jail population for a given year. The sky-blue line, derived from a linear 
+regression model, helps visualize the overall trend or relationship between the 
+two variables. There appears to be a positive correlation between the total jail 
+population rate and the Black jail population rate. This suggests that in 
+counties or years with higher overall jail populations, the Black jail 
+population rate is also higher. Points clustered when both variables are 
+relatively low, However, as the total jail population rate increases, the Black 
+jail population rate shows significant variability. The spread of the points 
+increases with higher total jail population rates, indicating more variability 
+in the Black jail population rate in counties with higher overall incarceration 
+rates. There are observed several outliers.
 
-The second chart that you will create and include will show how two different (continuous) variables are related to one another. Again, think carefully about what such a comparison means and what you want to communicate to your user (you may have to find relevant trends in the dataset first!). Here are some requirements to help guide your design:
+``````{r}
+data2 <- prison_wa %>%
+  filter(!is.na(total_jail_pop_rate)) %>%
+  filter(!is.na(black_jail_pop_rate))
 
-- You must have clear x and y axis labels
-- The chart needs a clear title 
-- If you choose to add a color encoding (not required), you need a legend for your different color and a clear legend title
+ggplot(data = data2, aes(x=total_jail_pop_rate, y=black_jail_pop_rate)) +
+  geom_point(color="pink") +
+  geom_smooth(method=lm, color="skyblue", se=FALSE) +
+  labs(title = paste("Relationship Between Jail Population Rate and Black",
+         "Jail Population Rate"),
+       x = "Total Jail Population Rate (Unit: 0.01)",
+       y = "Black Jail Population Rate (Unit: 0.01)")
+
+```
 
 ### Map
 
-Include a chart. Make sure to describe why you included the chart, and what patterns emerged
+The chart is an essential tool for visualizing and understanding the 
+distribution of incarceration rates among the White population across different 
+counties within Washington State. This map was included to provide a geographic 
+perspective on the disparities or uniformities in prison population rates, 
+Maps provide a clear visual way to spot regional trends and disparities which 
+can be crucial for policy development. Focusing on the White prison population 
+allows for the examination of how incarceration rates differ within this 
+specific demographic. The map shows varying levels of incarceration rates across 
+the state, with some counties exhibiting significantly higher rates than others. 
+Counties with darker shades indicate higher average White prison population 
+rates, suggesting regions where incarceration is more prevalent within this 
+demographic. Conversely, lighter shades indicate lower rates. There are about 3 
+southwestern counties have relatively dark green, indicating higher white prison 
+population rate. Others are relatively even in white prison population rate.
 
-The last chart that you will create and include will show how a variable is distributed geographically. Again, think carefully about what such a comparison means and what you want to communicate to your user (you may have to find relevant trends in the dataset first!). Here are some requirements to help guide your design:
+``````{r}
+library(mapproj)
+library(maps)
 
-- Your map needs a title
-- Your color scale needs a legend with a clear label
-- Use a map based coordinate system to set the aspect ratio of your map
+map_wa <- prison_wa %>%
+  filter(year < 2017) %>%
+  mutate(county = tolower(gsub("\\s.*", "", county_name))) %>%
+  filter(!is.na(white_prison_pop_rate)) %>%
+  group_by(county) %>%
+  summarize(avg_white_rate = mean(white_prison_pop_rate)) %>%
+  select(county, avg_white_rate)
 
+county_shape <- map_data("county") %>%
+  filter(region == "washington") %>%
+  rename(county = subregion) %>%
+  left_join(map_wa, by = "county")
+  
+
+ggplot(county_shape) +
+  geom_polygon(
+    mapping = aes(x=long, y=lat, group = group, 
+                  fill = avg_white_rate),
+    color = "white",
+    size = .1
+  ) +
+  coord_map() +
+  scale_fill_continuous(low = "grey90", high = "darkgreen") +
+  labs(title = paste("Average White Prison Population Rate in Each County",
+                     "in Washington"),
+       fill = "Average White Prison Population Rate (Unit: 0.01)", 
+       x = "Longitude", 
+       y = "Latitude") +
+  theme_minimal()
+```
